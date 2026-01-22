@@ -15,15 +15,15 @@ long Y_GYRO_OFFSET = 0;
 long Z_GYRO_OFFSET = 0;
 
 void mpu6050_init() {
-    HAL_Delay(5000);
+    HAL_Delay(2000);
 
     // Check if MPU 6050 is connected
     HAL_StatusTypeDef ret = HAL_I2C_IsDeviceReady(&hi2c1, DEVICE_ADDRESS << (1 + 0), 1, 100);
     if (ret == HAL_OK) {
-        printf("The device is ready. \n");
+        printf("[MPU 6050] The device is ready. \n");
     }
     else {
-        printf("The device is not ready. Check cables \n");
+        printf("[MPU 6050] The device is not ready. Check cables \n");
     }
 
     // Configure MPU 6050
@@ -31,30 +31,30 @@ void mpu6050_init() {
     uint8_t temp_data = FS_GYRO_500;
     ret = HAL_I2C_Mem_Write(&hi2c1, DEVICE_ADDRESS << (1 + 0), REG_CONFIG_GYRO, 1, &temp_data, 1, 100);
     if (ret == HAL_OK) {
-        printf("Configuring gyroscope \n");
+        printf("[MPU 6050] Configuring gyroscope \n");
     }
     else {
-        printf("Failed to configure gyroscope \n");
+        printf("[MPU 6050] Failed to configure gyroscope \n");
     }
 
     // acc
     temp_data = FS_ACC_4G;
     ret = HAL_I2C_Mem_Write(&hi2c1, DEVICE_ADDRESS << (1 + 0), REG_CONFIG_ACC, 1, &temp_data, 1, 100);
     if (ret == HAL_OK) {
-        printf("Configuring accelerometer \n");
+        printf("[MPU 6050] Configuring accelerometer \n");
     }
     else {
-        printf("Failed to configure the accelerometer \n");
+        printf("[MPU 6050] Failed to configure the accelerometer \n");
     }
 
     // sleep
     temp_data = 0;
     ret = HAL_I2C_Mem_Write(&hi2c1, DEVICE_ADDRESS << (1 + 0), REG_USR_CTRL, 1, &temp_data, 1, 100);
     if (ret == HAL_OK) {
-        printf("Exiting from sleep mode \n");
+        printf("[MPU 6050] Exiting from sleep mode \n");
     }
     else {
-        printf("Failed to exit from sleep mode \n");
+        printf("[MPU 6050] Failed to exit from sleep mode \n");
     }
 }
 
@@ -88,7 +88,7 @@ void mpu6050_calibrate() {
         }
         else
         {
-            printf("Sensor Read Error during calibration!\r\n");
+            printf("[MPU 6050] Sensor Read Error during calibration!\r\n");
         }
 
         HAL_Delay(2);
@@ -102,9 +102,9 @@ void mpu6050_calibrate() {
     Y_GYRO_OFFSET = y_gyro_sum / 2000;
     Z_GYRO_OFFSET = z_gyro_sum / 2000;
 
-    printf("Calibration Complete.\r\n");
-    printf("Gyro Offsets: X:%ld Y:%ld Z:%ld\r\n", X_ACC_OFFSET, Y_ACC_OFFSET, Z_ACC_OFFSET);
-    printf("Acc Offsets: X:%ld Y:%ld Z:%ld\r\n", X_GYRO_OFFSET, Y_GYRO_OFFSET, Z_GYRO_OFFSET);
+    printf("[MPU 6050] Calibration Complete.\r\n");
+    printf("[MPU 6050] Gyro Offsets: X:%ld Y:%ld Z:%ld\r\n", X_ACC_OFFSET, Y_ACC_OFFSET, Z_ACC_OFFSET);
+    printf("[MPU 6050] Acc Offsets: X:%ld Y:%ld Z:%ld\r\n", X_GYRO_OFFSET, Y_GYRO_OFFSET, Z_GYRO_OFFSET);
 }
 
 HAL_StatusTypeDef mpu6050_read_acc(MPU6050_Data_t *acc_data) {

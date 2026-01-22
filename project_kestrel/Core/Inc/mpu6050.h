@@ -2,7 +2,7 @@
 #define INC_MPU6050_H
 
 
-#define DEVICE_ADDRESS 0x68
+#define DEVICE_ADDRESS  0x68
 
 #define FS_GYRO_250     0
 #define FS_GYRO_500     8

@@ -29,9 +29,11 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include "mpu6050.h"
 #include "kalman.h"
 #include "imu.h"
+#include "baro.h"
 
 /* USER CODE END Includes */
 
@@ -52,6 +54,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
+I2C_HandleTypeDef hi2c2;
 
 /* USER CODE BEGIN PV */
 
@@ -61,6 +64,7 @@ I2C_HandleTypeDef hi2c1;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
+static void MX_I2C2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -101,12 +105,21 @@ int main(void)
   MX_GPIO_Init();
   MX_I2C1_Init();
   MX_USB_DEVICE_Init();
-  /* USER CODE BEGIN 2 */
+  MX_I2C2_Init();
 
-  HAL_Delay(3000); // Wait 3 seconds
+  /* USER CODE BEGIN 2 */
+  HAL_Delay(5000); // Wait 5 seconds
 
   // Initialize IMU
   IMU_System_Init();
+  // Initialize BARO
+  BARO_System_Init();
+
+  // Define timers
+  uint32_t last_sensor_time = 0;
+  uint32_t last_blink_time = 0;
+  const uint32_t SENSOR_INTERVAL = 100; // Read sensors every 100ms 
+  const uint32_t BLINK_INTERVAL  = 500; // Blink LED every 500ms
 
   /* USER CODE END 2 */
 
@@ -118,24 +131,49 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    uint32_t current_time = HAL_GetTick();
+    bool system_good = true;
+    
+    // --- Control Instrument Readings ---
+    if (current_time - last_sensor_time >= SENSOR_INTERVAL) { 
+      // Save the time we ran this task
+      last_sensor_time = current_time;
 
-    // Run the math
-    if (IMU_System_Update() != HAL_OK) {
-        printf("IMU Failure! Checking wires...\r\n");
-
-        // Blink red light to indicate failure
-        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_15);
-    }
-    else {
-        // Get the attitude instructions
+      // 1. IMU Update
+      if (IMU_System_Update() != HAL_OK) {
+        printf("IMU Failure! Check wires... \r\n");
+        system_good = false;
+      }
+      else {
         Flight_Attitude_t att = IMU_GetAttitude();
-        printf(
-            "Roll (y): %.2f | Pitch(x): %.2f | Yaw rate (z): %.2f \r\n",
-            att.roll, att.pitch, att.yaw_rate
-        );
+        printf("Roll (y): %.2f | Pitch (x): %.2f | Yaw rate (z): %.2f \r\n", att.roll, att.pitch, att.yaw_rate);
+      }
+
+      // 2. BARO Update
+      if (BARO_System_Update() != HAL_OK) {
+        printf("BARO Failure! Check wires... \r\n");
+        system_good = false;
+      }
+      else {
+        // Get the altitude instructions
+        BARO_FlightData_t alt = BARO_GetAltitude();
+        printf("Altitude: %.2fm | Temperature: %.2f C \r\n", alt.altitude, alt.temperature);
+      }
     }
 
-    HAL_Delay(50);
+    // --- Control LED Indicators ---
+    if (current_time - last_blink_time >= BLINK_INTERVAL) {
+      // Save the time we ran this task
+      last_blink_time = current_time;
+
+      if (system_good) {
+        // Blink Green
+        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
+      } else {
+        // Blink Red
+        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_15);
+      }
+    }
   }
   /* USER CODE END 3 */
 }
@@ -222,6 +260,40 @@ static void MX_I2C1_Init(void)
 }
 
 /**
+  * @brief I2C2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C2_Init(void)
+{
+
+  /* USER CODE BEGIN I2C2_Init 0 */
+
+  /* USER CODE END I2C2_Init 0 */
+
+  /* USER CODE BEGIN I2C2_Init 1 */
+
+  /* USER CODE END I2C2_Init 1 */
+  hi2c2.Instance = I2C2;
+  hi2c2.Init.ClockSpeed = 100000;
+  hi2c2.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c2.Init.OwnAddress1 = 0;
+  hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c2.Init.OwnAddress2 = 0;
+  hi2c2.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c2.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C2_Init 2 */
+
+  /* USER CODE END I2C2_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -239,10 +311,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13|GPIO_PIN_15, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : PB15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_15;
+  /*Configure GPIO pins : PB13 PB15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
