@@ -48,7 +48,7 @@ kestrel_gcs/
 
 ```bash
 python3 -m venv .venv
-.venv/bin/activate
+source .venv/bin/activate
 pip install requirements.txt
 ```
 
