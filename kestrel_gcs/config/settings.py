@@ -20,5 +20,6 @@ STATUS_LED_PIN = 27 # Physical Pin 27
 # =========================================
 # CONTROLLER CONSTANTS
 # =========================================
-DEAD_ZONE = 2000
+DEAD_ZONE = 0.15
 MAX_JOYSTICK_VAL = 32767
+EXPO_FACTOR = 0.5
