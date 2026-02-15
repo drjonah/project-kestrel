@@ -4,7 +4,7 @@
 
 # Using BCM Numbering 
 RADIO_CE_PIN = 17   # Physical Pin 11
-RADIO_CSN_PIN = 8   # Physical Pin 24
+RADIO_CSN_PIN = 0   # GPIO 8 -> Physical Pin 24
 
 # Radio Frequency Channel (0-125)
 RADIO_CHANNEL = 76 

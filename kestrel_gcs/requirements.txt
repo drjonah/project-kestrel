@@ -1,2 +1,3 @@
 gpiod
 pyPS4Controller
+pyrf24
