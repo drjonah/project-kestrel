@@ -50,6 +50,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/imu.c
     Core/Src/bmp280.c
     Core/Src/baro.c
+    Core/Src/nrf24l01.c
 )
 
 # Add include paths
